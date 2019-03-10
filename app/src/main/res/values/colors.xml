@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimaryDay">#537EA0</color>
+    <color name="colorPrimaryDayDark">#436481</color>
+    <color name="colorBackgroundDay">#FFFFFF</color>
+    <color name="colorDayAccent">#D81B60</color>
+    <color name="colorDayFollowers">#3D97D2</color>
+    <color name="colorDayGreen">#43C047</color>
+    <color name="colorDayRed">#EB6962</color>
+    <color name="colorDayGrey">#E0E0E0</color>
+    <color name="colorTextDay">#000000</color>
+
+    <color name="colorPrimaryNight">#212D3A</color>
+    <color name="colorPrimaryNightDark">#1A242E</color>
+    <color name="colorBackgroundNight">#1D2733</color>
+    <color name="colorNightAccent">#D81B60</color>
+    <color name="colorNightFollowers">#3D97D2</color>
+    <color name="colorNightGreen">#43C047</color>
+    <color name="colorNightRed">#EB6962</color>
+    <color name="colorNightGrey">#E0E0E0</color>
+    <color name="colorTextNight">#FFFFFF</color>
+</resources>
