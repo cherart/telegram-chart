@@ -19,4 +19,6 @@
     <color name="colorNightRed">#EB6962</color>
     <color name="colorNightGrey">#E0E0E0</color>
     <color name="colorTextNight">#FFFFFF</color>
+
+    <color name="colorOpac">#DBE7F0</color>
 </resources>

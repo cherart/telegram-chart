@@ -13,25 +13,66 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+import com.cherkashyn.telegramchart.utils.JSONParser;
+import com.cherkashyn.telegramchart.chart.FollowersLineChart;
+import com.cherkashyn.telegramchart.model.Followers;
+
+import org.json.JSONException;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     ConstraintLayout background;
     TextView joined;
     TextView left;
+    FollowersLineChart chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            setTheme(R.style.ActivityTheme_Dark);
-        } else {
-            setTheme(R.style.ActivityTheme_Light);
-        }
+        setTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getSupportActionBar().setTitle("Statistics");
+
         background = findViewById(R.id.background);
         joined = findViewById(R.id.textview_joined);
         left = findViewById(R.id.textview_left);
+        chart = findViewById(R.id.chart);
+        getSupportActionBar().setTitle("Statistics");
+
+
+        try {
+            String json = readJSONFromFile();
+            List<Followers> followersList = JSONParser.parseJSONToListOfFollowers(json);
+            chart.setData(followersList.get(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setTheme() {
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES)
+            setTheme(R.style.ActivityTheme_Dark);
+        else
+            setTheme(R.style.ActivityTheme_Light);
+    }
+
+    private String readJSONFromFile() throws IOException {
+        InputStream is = getResources().getAssets().open("chart_data.json");
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
+        String s;
+        while ((s = br.readLine()) != null) {
+            sb.append(s);
+            sb.append("\n");
+        }
+        return sb.toString();
     }
 
     @Override
