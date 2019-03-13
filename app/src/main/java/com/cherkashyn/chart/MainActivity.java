@@ -14,7 +14,7 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.cherkashyn.telegramchart.utils.JSONParser;
-import com.cherkashyn.telegramchart.chart.FollowersLineChart;
+import com.cherkashyn.telegramchart.chart.FollowersChart;
 import com.cherkashyn.telegramchart.model.Followers;
 
 import org.json.JSONException;
@@ -30,7 +30,7 @@ public class MainActivity extends AppCompatActivity {
     ConstraintLayout background;
     TextView joined;
     TextView left;
-    FollowersLineChart chart;
+    FollowersChart chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
