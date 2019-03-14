@@ -41,10 +41,9 @@ public class FollowersChart extends View {
     private int maxYValue;
     private int countX = 24;
     private int textSize = 12;
-
+    private float stepXFullChart;
     private float eventX;
 
-    private Canvas canvas;
     private TextPaint paintText;
     private Paint paintWindowVerticalBorder;
     private Paint paintWindowHorizontalBorder;
@@ -78,9 +77,6 @@ public class FollowersChart extends View {
         heightDetailedChartPx = dpToPx(256);
         heightFullChartPx = dpToPx(38);
         padding = dpToPx(16);
-
-        windowLeftBorder = dpToPx(300);
-        windowRightBorder = dpToPx(350);
 
         paintYZero = new Paint(Paint.ANTI_ALIAS_FLAG);
         paintYZero.setAntiAlias(true);
@@ -128,10 +124,18 @@ public class FollowersChart extends View {
         pathWindowVertical = new Path();
     }
 
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        windowRightBorder = w;
+        stepXFullChart = w / (float) followers.getX().size();
+        windowLeftBorder = w - countX * stepXFullChart;
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        this.canvas = canvas;
 
         drawGridWithYValues(canvas);
         drawXValues(canvas);
@@ -202,7 +206,6 @@ public class FollowersChart extends View {
     private void drawFullChart(Canvas canvas) {
         if (!cachedFullChart) {
             float stepY = (heightFullChartPx - dpToPx(4)) / maxYValue;
-            float stepX = getWidth() / (float) followers.getX().size();
 
             for (int i = 0; i < followers.getX().size(); i++) {
                 float y0 = listYZero.get(i) * stepY;
@@ -211,8 +214,8 @@ public class FollowersChart extends View {
                     pathYZeroFull.moveTo(0, heightDetailedChartPx + padding * 3 + heightFullChartPx - y0 - dpToPx(2));
                     pathYOneFull.moveTo(0, heightDetailedChartPx + padding * 3 + heightFullChartPx - y1 - dpToPx(2));
                 } else {
-                    pathYZeroFull.lineTo(i * stepX, heightDetailedChartPx + padding * 3 + heightFullChartPx - y0 - dpToPx(2));
-                    pathYOneFull.lineTo(i * stepX, heightDetailedChartPx + padding * 3 + heightFullChartPx - y1 - dpToPx(2));
+                    pathYZeroFull.lineTo(i * stepXFullChart, heightDetailedChartPx + padding * 3 + heightFullChartPx - y0 - dpToPx(2));
+                    pathYOneFull.lineTo(i * stepXFullChart, heightDetailedChartPx + padding * 3 + heightFullChartPx - y1 - dpToPx(2));
                 }
             }
             cachedFullChart = true;
@@ -255,36 +258,38 @@ public class FollowersChart extends View {
             case MotionEvent.ACTION_DOWN:
                 float x = event.getX();
                 float y = event.getY();
-                Log.i("Full", String.valueOf(event.getX()));
+
                 if (x <= windowLeftBorder + dpToPx(2) && x >= windowLeftBorder - dpToPx(2)) {
                     isLeftBorderTouched = true;
-                    eventX = x;
                 } else if (x <= windowRightBorder + dpToPx(2) && x >= windowRightBorder - dpToPx(2)) {
                     isRightBorderTouched = true;
-                    eventX = x;
                 } else if (x > windowLeftBorder && x < windowRightBorder) { //Add y
                     isWindowTouched = true;
-                    eventX = x;
-                } else {
-                    isWindowTouched = false;
                 }
+                eventX = x;
                 break;
             case MotionEvent.ACTION_MOVE:
+                float dx = event.getX() - eventX;
                 if (isWindowTouched) {
-                    windowLeftBorder += event.getX() - eventX;
-                    windowRightBorder += event.getX() - eventX;
-                    eventX = event.getX();
-                    invalidate();
+                    if (windowLeftBorder + dx > 0 && windowRightBorder + dx < getWidth()) {
+                        windowLeftBorder += dx;
+                        windowRightBorder += dx;
+                    }
                 } else if (isLeftBorderTouched) {
-                    windowLeftBorder += event.getX() - eventX;
-                    eventX = event.getX();
-                    invalidate();
-
+                    if (windowRightBorder - windowLeftBorder < countX * stepXFullChart) {
+                        windowLeftBorder = windowRightBorder - countX * stepXFullChart;
+                    } else if (windowLeftBorder + dx > 0) {
+                        windowLeftBorder += dx;
+                    }
                 } else if (isRightBorderTouched) {
-                    windowRightBorder += event.getX() - eventX;
-                    eventX = event.getX();
-                    invalidate();
+                    if (windowRightBorder - windowLeftBorder + dx < countX * stepXFullChart) {
+                        windowRightBorder = windowLeftBorder + countX * stepXFullChart;
+                    } else if (windowRightBorder + dx < getWidth()) {
+                        windowRightBorder += dx;
+                    }
                 }
+                eventX = event.getX();
+                invalidate();
                 break;
             case MotionEvent.ACTION_UP:
                 isWindowTouched = false;
