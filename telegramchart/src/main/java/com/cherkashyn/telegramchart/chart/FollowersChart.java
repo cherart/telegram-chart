@@ -33,6 +33,8 @@ public class FollowersChart extends View {
     private float windowRightBorder;
 
     private boolean isWindowTouched = false;
+    private boolean isLeftBorderTouched = false;
+    private boolean isRightBorderTouched = false;
     private boolean cachedFullChart = false;
     private boolean cachedGrid = false;
 
@@ -254,7 +256,13 @@ public class FollowersChart extends View {
                 float x = event.getX();
                 float y = event.getY();
                 Log.i("Full", String.valueOf(event.getX()));
-                if (x > windowLeftBorder && x < windowRightBorder) { //Add y
+                if (x <= windowLeftBorder + dpToPx(2) && x >= windowLeftBorder - dpToPx(2)) {
+                    isLeftBorderTouched = true;
+                    eventX = x;
+                } else if (x <= windowRightBorder + dpToPx(2) && x >= windowRightBorder - dpToPx(2)) {
+                    isRightBorderTouched = true;
+                    eventX = x;
+                } else if (x > windowLeftBorder && x < windowRightBorder) { //Add y
                     isWindowTouched = true;
                     eventX = x;
                 } else {
@@ -267,7 +275,21 @@ public class FollowersChart extends View {
                     windowRightBorder += event.getX() - eventX;
                     eventX = event.getX();
                     invalidate();
+                } else if (isLeftBorderTouched) {
+                    windowLeftBorder += event.getX() - eventX;
+                    eventX = event.getX();
+                    invalidate();
+
+                } else if (isRightBorderTouched) {
+                    windowRightBorder += event.getX() - eventX;
+                    eventX = event.getX();
+                    invalidate();
                 }
+                break;
+            case MotionEvent.ACTION_UP:
+                isWindowTouched = false;
+                isLeftBorderTouched = false;
+                isRightBorderTouched = false;
                 break;
         }
         return true;
