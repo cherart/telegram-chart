@@ -18,12 +18,11 @@ public class JSONParser {
 
         for (int i = 0; i < followersArray.length(); i++) {
             JSONObject followersJson = followersArray.getJSONObject(i);
-
             Followers followers = new Followers();
             followers.setX(getArrayOfX(followersJson));
-            followers.setLineYZero(getY(followersJson, 0));
-            followers.setLineYOne(getY(followersJson, 1));
-
+            for (int j = 1; j < followersJson.getJSONArray("columns").length(); j++) {
+                followers.addLine(getY(followersJson, j));
+            }
             followersList.add(followers);
         }
 
@@ -43,20 +42,12 @@ public class JSONParser {
 
     private static Line getY(JSONObject followersJson, int index) throws JSONException {
         JSONArray columnsJson = followersJson.getJSONArray("columns");
-
         Line lineY = new Line();
-        lineY.setY(getArrayOfY(columnsJson.getJSONArray(index + 1)));
-
+        lineY.setY(getArrayOfY(columnsJson.getJSONArray(index)));
         JSONObject nameJson = followersJson.getJSONObject("names");
         JSONObject colorJson = followersJson.getJSONObject("colors");
-        if (index == 0) {
-            lineY.setName(nameJson.getString("y0"));
-            lineY.setColor(colorJson.getString("y0"));
-        } else {
-            lineY.setName(nameJson.getString("y1"));
-            lineY.setColor(colorJson.getString("y1"));
-        }
-
+        lineY.setName(nameJson.getString("y" + (index - 1)));
+        lineY.setColor(colorJson.getString("y" + (index - 1)));
         return lineY;
     }
 

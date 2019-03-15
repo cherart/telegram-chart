@@ -1,12 +1,12 @@
 package com.cherkashyn.telegramchart.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Followers {
 
     private List<Long> x;
-    private Line lineYZero;
-    private Line lineYOne;
+    private List<Line> lines = new ArrayList<>();
 
     public List<Long> getX() {
         return x;
@@ -16,19 +16,11 @@ public class Followers {
         this.x = x;
     }
 
-    public Line getLineYZero() {
-        return lineYZero;
+    public void addLine(Line line) {
+        lines.add(line);
     }
 
-    public void setLineYZero(Line lineYZero) {
-        this.lineYZero = lineYZero;
-    }
-
-    public Line getLineYOne() {
-        return lineYOne;
-    }
-
-    public void setLineYOne(Line lineYOne) {
-        this.lineYOne = lineYOne;
+    public List<Line> getLines() {
+        return lines;
     }
 }

@@ -1,9 +1,12 @@
 package com.cherkashyn.chart;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
@@ -11,10 +14,11 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.widget.TextView;
 
 import com.cherkashyn.telegramchart.utils.JSONParser;
-import com.cherkashyn.telegramchart.chart.FollowersChart;
+import com.cherkashyn.telegramchart.chart.LineChart;
 import com.cherkashyn.telegramchart.model.Followers;
 
 import org.json.JSONException;
@@ -28,27 +32,37 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     ConstraintLayout background;
-    TextView joined;
-    TextView left;
-    FollowersChart chart;
+    RecyclerView rvCharts;
+    TextView tvJoined;
+    TextView tvLeft;
+    LineChart chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        background = findViewById(R.id.background);
-        joined = findViewById(R.id.textview_joined);
-        left = findViewById(R.id.textview_left);
-        chart = findViewById(R.id.chart);
         getSupportActionBar().setTitle("Statistics");
 
+//        background = findViewById(R.id.background);
+//        tvJoined = findViewById(R.id.textview_joined);
+//        tvLeft = findViewById(R.id.textview_left);
+//        chart = findViewById(R.id.chart);
+        rvCharts = findViewById(R.id.recyclerview_charts);
+        rvCharts.setLayoutManager(new LinearLayoutManager(this));
+        new RecyclerView.SimpleOnItemTouchListener(){
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                return super.onInterceptTouchEvent(rv, e);
+            }
+        };
+        ChartsAdapter adapter = new ChartsAdapter();
+        rvCharts.setAdapter(adapter);
 
         try {
             String json = readJSONFromFile();
             List<Followers> followersList = JSONParser.parseJSONToListOfFollowers(json);
-            chart.setData(followersList.get(0));
+            adapter.setData(followersList);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (JSONException e) {
@@ -101,8 +115,8 @@ public class MainActivity extends AppCompatActivity {
             colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
             colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
             colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
-            joined.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
-            left.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
+//            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
+//            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
         } else {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
@@ -111,8 +125,8 @@ public class MainActivity extends AppCompatActivity {
             colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
             colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
             colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
-            joined.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
-            left.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
+//            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
+//            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
         }
 
         changeStatusBarColor(colorFromStatusBar, colorToStatusBar);
