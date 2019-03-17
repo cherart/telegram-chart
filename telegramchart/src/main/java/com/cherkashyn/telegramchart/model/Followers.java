@@ -5,15 +5,15 @@ import java.util.List;
 
 public class Followers {
 
-    private List<Long> x;
+    private List<Long> listOfX;
     private List<Line> lines = new ArrayList<>();
 
-    public List<Long> getX() {
-        return x;
+    public List<Long> getListOfX() {
+        return listOfX;
     }
 
-    public void setX(List<Long> x) {
-        this.x = x;
+    public void setListOfX(List<Long> listOfX) {
+        this.listOfX = listOfX;
     }
 
     public void addLine(Line line) {

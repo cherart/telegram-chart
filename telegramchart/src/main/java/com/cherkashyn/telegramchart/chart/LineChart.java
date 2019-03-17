@@ -1,5 +1,7 @@
 package com.cherkashyn.telegramchart.chart;
 
+import android.animation.PropertyValuesHolder;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -10,6 +12,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
 
 import com.cherkashyn.telegramchart.model.Followers;
 import com.cherkashyn.telegramchart.model.Line;
@@ -20,7 +23,7 @@ import java.util.List;
 
 import androidx.annotation.Nullable;
 
-import static com.cherkashyn.telegramchart.utils.DensityConverter.dpToPx;
+import static com.cherkashyn.telegramchart.utils.Utils.dpToPx;
 
 public class LineChart extends View {
 
@@ -29,38 +32,50 @@ public class LineChart extends View {
     private List<Integer> maxValues = new ArrayList<>();
     private List<Path> linePathsFull = new ArrayList<>();
     private List<Path> linePathsDetailed = new ArrayList<>();
+    private List<Integer> removedLines = new ArrayList<>();
 
     private float heightDetailedChartPx;
     private float heightFullChartPx;
-    private float margin;
+    private float marginSixteenDp;
+
     private float windowLeftBorder;
     private float windowRightBorder;
+    private float windowTopBorder;
+    private float windowBottomBorder;
 
+    private boolean isMaxValueUpdated = false;
     private boolean isWindowTouched = false;
     private boolean isLeftBorderTouched = false;
     private boolean isRightBorderTouched = false;
-    private boolean cachedFullChart = false;
     private boolean cachedGrid = false;
 
     private int maxValue;
     private int countX = 24;
+    private int defaultCountX = 24;
     private int textSize = 12;
+    private float strokeWidthVertical = dpToPx(6);
+    private float strokeWidthHorizontal = dpToPx(2);
     private float stepXFullChart;
+    private float stepXPosDetailed;
     private float eventX;
 
     private TextPaint paintText;
-    private Paint paintWindowVerticalBorder;
-    private Paint paintWindowHorizontalBorder;
+    private Paint paintWindowSelector;
     private Paint paintLine;
-    private Paint paintYOne;
     private Paint paintGridLine;
-    private Path pathYZeroDetailed;
-    private Path pathYOneDetailed;
-    private Path pathYZeroFull;
-    private Path pathYOneFull;
     private Path pathGridLine;
     private Path pathWindowHorizontal;
     private Path pathWindowVertical;
+    private Paint paintRectangle;
+
+    private ValueAnimator animator;
+    private float stepYDetailed;
+    private float stepYFull;
+    private int alpha;
+
+    float dx;
+    int startIndex;
+    int endIndex;
 
     public LineChart(Context context) {
         super(context);
@@ -72,19 +87,19 @@ public class LineChart extends View {
         init();
     }
 
-    public LineChart(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
     private void init() {
         heightDetailedChartPx = dpToPx(256);
         heightFullChartPx = dpToPx(38);
-        margin = dpToPx(16);
+        marginSixteenDp = dpToPx(16);
+
+        animator = new ValueAnimator();
+        animator.setDuration(750);
+        animator.setInterpolator(new AccelerateDecelerateInterpolator());
 
         paintLine = new Paint(Paint.ANTI_ALIAS_FLAG);
         paintLine.setAntiAlias(true);
         paintLine.setStrokeJoin(Paint.Join.ROUND);
+        paintLine.setStrokeCap(Paint.Cap.ROUND);
         paintLine.setStrokeWidth(dpToPx(2));
         paintLine.setStyle(Paint.Style.STROKE);
 
@@ -98,17 +113,15 @@ public class LineChart extends View {
         paintText.setStyle(Paint.Style.FILL);
         paintText.setTextSize(dpToPx(textSize));
 
-        paintWindowHorizontalBorder = new Paint();
-        paintWindowHorizontalBorder.setColor(Color.parseColor("#DBE7F0"));
-        paintWindowHorizontalBorder.setStrokeWidth(dpToPx(2));
-        paintWindowHorizontalBorder.setAlpha(210);
-        paintWindowHorizontalBorder.setStyle(Paint.Style.STROKE);
+        paintWindowSelector = new Paint();
+        paintWindowSelector.setColor(Color.parseColor("#DBE7F0"));
+        paintWindowSelector.setStrokeWidth(dpToPx(2));
+        paintWindowSelector.setAlpha(210);
+        paintWindowSelector.setStyle(Paint.Style.STROKE);
 
-        paintWindowVerticalBorder = new Paint();
-        paintWindowVerticalBorder.setColor(Color.parseColor("#DBE7F0"));
-        paintWindowVerticalBorder.setStrokeWidth(dpToPx(4));
-        paintWindowVerticalBorder.setAlpha(210);
-        paintWindowVerticalBorder.setStyle(Paint.Style.STROKE);
+        paintRectangle = new Paint();
+        paintRectangle.setColor(Color.parseColor("#E4EEF5"));
+        paintRectangle.setAlpha(125);
 
         pathGridLine = new Path();
         pathWindowHorizontal = new Path();
@@ -119,138 +132,167 @@ public class LineChart extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+        stepXFullChart = w / (float) (followers.getListOfX().size() - 1);
         windowRightBorder = w;
-        stepXFullChart = w / (float) followers.getX().size();
         windowLeftBorder = w - countX * stepXFullChart;
+        windowTopBorder = h - heightFullChartPx;
+        windowBottomBorder = h;
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (lines != null) {
+        if (!lines.isEmpty()) {
             drawGridWithYValues(canvas);
             drawXValues(canvas);
             drawDetailedLineChart(canvas);
             drawFullChart(canvas);
             drawRectangle(canvas);
-            drawRectangleWindow(canvas);
+            drawWindowSelector(canvas);
         }
     }
 
     private void drawGridWithYValues(Canvas canvas) {
-        float startYGridLine = margin;
-        float startYValue = margin - dpToPx(6);
-        float stepY = heightDetailedChartPx / 5f;
+        float marginSixDp = dpToPx(6);
+        float startYPosGridLine = marginSixteenDp;
+        float startYPosValueText = marginSixteenDp - marginSixDp;
+        float stepYPos = heightDetailedChartPx / 5f;
         int stepValue = maxValue / 5;
 
         for (int i = 0; i < 6; i++) {
-            if (!cachedGrid) {
-                float yGridLine = startYGridLine + (stepY * i);
-                pathGridLine.moveTo(0, yGridLine);
-                pathGridLine.lineTo(getWidth(), yGridLine);
-            }
-            float yValue = startYValue + (stepY * i);
-            canvas.drawText(String.valueOf(stepValue * (5 - i)), 0, yValue, paintText);
+            float yPosGridLine = startYPosGridLine + (stepYPos * i);
+            pathGridLine.moveTo(0, yPosGridLine);
+            pathGridLine.lineTo(getWidth(), yPosGridLine);
+            float yPosValue = startYPosValueText + (stepYPos * i);
+            canvas.drawText(String.valueOf(stepValue * (5 - i)), 0, yPosValue, paintText);
         }
-        cachedGrid = true;
         canvas.drawPath(pathGridLine, paintGridLine);
     }
 
     private void drawXValues(Canvas canvas) {
-        float startY = heightDetailedChartPx + margin * 2;
-        float stepX = getWidth() / 5f - dpToPx(7);
+        float startYPos = heightDetailedChartPx + marginSixteenDp * 2;
+        float startXPos = 0;
+        float stepXPos = getWidth() / 5f - dpToPx(7);
         for (int i = 0; i < 6; i++) {
-            canvas.drawText("Jan 22", stepX * i, startY, paintText);
+            canvas.drawText("Jan 22", startXPos + stepXPos * i, startYPos, paintText);
         }
     }
 
     private void drawDetailedLineChart(Canvas canvas) {
-        float stepY = heightDetailedChartPx / maxValue;
-        float stepX = getWidth() / (float) (countX - 1);
-        int startIndex = followers.getX().size() - countX;
+        float stepYPos = heightDetailedChartPx / maxValue;
+        if (isMaxValueUpdated) {
+            stepYPos = (float) animator.getAnimatedValue("detailed");
+        }
+        stepXPosDetailed = getWidth() / (float) (countX - 1);
+        paintLine.setStrokeWidth(dpToPx(2));
 
         for (int i = 0; i < countX; i++) {
             for (int j = 0; j < lines.size(); j++) {
-                float y = lines.get(j).getY().get(startIndex + i) * stepY;
+                float y = lines.get(j).getListOfY().get(startIndex + i) * stepYPos;
                 Path path = linePathsDetailed.get(j);
                 if (i == 0)
-                    path.moveTo(0, heightDetailedChartPx + margin - y);
-                else
-                    path.lineTo(i * stepX, heightDetailedChartPx + margin - y);
-                if (i == countX - 1) {
-                    paintLine.setColor(Color.parseColor(lines.get(j).getColor()));
-                    canvas.drawPath(path, paintLine);
-                    path.reset();
+                    path.moveTo(0, heightDetailedChartPx + marginSixteenDp - y);
+                else {
+                    path.lineTo(i * stepXPosDetailed, heightDetailedChartPx + marginSixteenDp - y);
+                    if (i == countX - 1) {
+                        paintLine.setColor(Color.parseColor(lines.get(j).getColor()));
+                        if (removedLines.contains(j)) {
+                            paintLine.setAlpha(alpha);
+                        } else {
+                            paintLine.setAlpha(255);
+                        }
+                        canvas.drawPath(path, paintLine);
+                        path.reset();
+                    }
                 }
             }
         }
     }
 
     private void drawRectangle(Canvas canvas) {
-        Paint paint = new Paint();
-        paint.setColor(Color.parseColor("#E4EEF5"));
-        paint.setAlpha(125);
-        canvas.drawRect(0, heightDetailedChartPx + margin * 3, windowLeftBorder, heightDetailedChartPx + margin * 3 + heightFullChartPx, paint);
-        canvas.drawRect(windowRightBorder, heightDetailedChartPx + margin * 3, getWidth(), heightDetailedChartPx + margin * 3 + heightFullChartPx, paint);
+        canvas.drawRect(0, heightDetailedChartPx + marginSixteenDp * 3, windowLeftBorder, heightDetailedChartPx + marginSixteenDp * 3 + heightFullChartPx, paintRectangle);
+        canvas.drawRect(windowRightBorder, heightDetailedChartPx + marginSixteenDp * 3, getWidth(), heightDetailedChartPx + marginSixteenDp * 3 + heightFullChartPx, paintRectangle);
     }
 
     private void drawFullChart(Canvas canvas) {
-        if (!cachedFullChart) {
-            float stepY = (heightFullChartPx - dpToPx(4)) / maxValue;
+        paintLine.setStrokeWidth(2);
 
-            for (int i = 0; i < followers.getX().size(); i++) {
-                for (int j = 0; j < lines.size(); j++) {
-                    float y = lines.get(j).getY().get(i) * stepY;
-                    Path path = linePathsFull.get(j);
-                    if (i == 0)
-                        path.moveTo(0, heightDetailedChartPx + margin * 3 + heightFullChartPx - y - dpToPx(2));
-                    else
-                        path.lineTo(i * stepXFullChart, heightDetailedChartPx + margin * 3 + heightFullChartPx - y - dpToPx(2));
-                    if (i == followers.getX().size() - 1) {
+        float stepY = (heightFullChartPx - dpToPx(4)) / maxValue;
+        if (isMaxValueUpdated) {
+            stepY = (float) animator.getAnimatedValue("full");
+        }
+
+        for (int i = 0; i < followers.getListOfX().size(); i++) {
+            for (int j = 0; j < lines.size(); j++) {
+                float y = (lines.get(j).getListOfY().get(i) * stepY);
+
+                Path path = linePathsFull.get(j);
+                if (i == 0)
+                    path.moveTo(0, heightDetailedChartPx + marginSixteenDp * 3 + heightFullChartPx - y - dpToPx(2));
+                else {
+                    path.lineTo(i * stepXFullChart, heightDetailedChartPx + marginSixteenDp * 3 + heightFullChartPx - y - dpToPx(2));
+                    if (i == followers.getListOfX().size() - 1) {
                         paintLine.setColor(Color.parseColor(lines.get(j).getColor()));
+                        if (removedLines.contains(j)) {
+                            paintLine.setAlpha(alpha);
+                        } else {
+                            paintLine.setAlpha(255);
+                        }
                         canvas.drawPath(path, paintLine);
+                        path.reset();
                     }
                 }
-            }
-            cachedFullChart = true;
-        } else {
-            for (int i = 0; i < lines.size(); i++) {
-                Path path = linePathsFull.get(i);
-                paintLine.setColor(Color.parseColor(lines.get(i).getColor()));
-                canvas.drawPath(path, paintLine);
             }
         }
     }
 
-    private void drawRectangleWindow(Canvas canvas) {
-        pathWindowHorizontal.moveTo(windowLeftBorder, heightDetailedChartPx + margin * 3);
-        pathWindowHorizontal.lineTo(windowRightBorder, heightDetailedChartPx + margin * 3);
-        pathWindowHorizontal.moveTo(windowLeftBorder, heightDetailedChartPx + margin * 3 + heightFullChartPx);
-        pathWindowHorizontal.lineTo(windowRightBorder, heightDetailedChartPx + margin * 3 + heightFullChartPx);
+    private void drawWindowSelector(Canvas canvas) {
+        pathWindowHorizontal.moveTo(windowLeftBorder, windowTopBorder + strokeWidthHorizontal / 2);
+        pathWindowHorizontal.lineTo(windowRightBorder, windowTopBorder + strokeWidthHorizontal / 2);
+        pathWindowHorizontal.moveTo(windowLeftBorder, windowBottomBorder - strokeWidthHorizontal / 2);
+        pathWindowHorizontal.lineTo(windowRightBorder, windowBottomBorder - strokeWidthHorizontal / 2);
 
-        pathWindowVertical.moveTo(windowLeftBorder, heightDetailedChartPx + margin * 3);
-        pathWindowVertical.lineTo(windowLeftBorder, heightDetailedChartPx + margin * 3 + heightFullChartPx);
-        pathWindowVertical.moveTo(windowRightBorder, heightDetailedChartPx + margin * 3);
-        pathWindowVertical.lineTo(windowRightBorder, heightDetailedChartPx + margin * 3 + heightFullChartPx);
+        pathWindowVertical.moveTo(windowLeftBorder + strokeWidthVertical / 2, windowTopBorder);
+        pathWindowVertical.lineTo(windowLeftBorder + strokeWidthVertical / 2, windowBottomBorder);
+        pathWindowVertical.moveTo(windowRightBorder - strokeWidthVertical / 2, windowTopBorder);
+        pathWindowVertical.lineTo(windowRightBorder - strokeWidthVertical / 2, windowBottomBorder);
 
-        canvas.drawPath(pathWindowHorizontal, paintWindowHorizontalBorder);
-        canvas.drawPath(pathWindowVertical, paintWindowVerticalBorder);
+        paintWindowSelector.setStrokeWidth(strokeWidthHorizontal);
+        canvas.drawPath(pathWindowHorizontal, paintWindowSelector);
         pathWindowHorizontal.reset();
+
+        paintWindowSelector.setStrokeWidth(strokeWidthVertical);
+        canvas.drawPath(pathWindowVertical, paintWindowSelector);
         pathWindowVertical.reset();
     }
 
     public void setData(Followers followers) {
         this.followers = followers;
         lines = followers.getLines();
+        startIndex = followers.getListOfX().size() - defaultCountX;
+        initMaxValues();
+        initChartPaths();
+        initStepY();
+    }
+
+    private void initMaxValues() {
         for (Line line : lines) {
-            maxValues.add(Collections.max(line.getY()));
+            maxValues.add(Collections.max(line.getListOfY()));
         }
-        maxValue = Collections.max(maxValues) / 10 * 10;
+        maxValue = Collections.max(maxValues) / 10 * 10 + 10;
+    }
+
+    private void initChartPaths() {
         for (int i = 0; i < lines.size(); i++) {
             linePathsFull.add(new Path());
             linePathsDetailed.add(new Path());
         }
+    }
+
+    private void initStepY() {
+        stepYDetailed = heightDetailedChartPx / maxValue;
+        stepYFull = heightFullChartPx / maxValue;
     }
 
     @Override
@@ -260,36 +302,46 @@ public class LineChart extends View {
             case MotionEvent.ACTION_DOWN:
                 float x = event.getX();
                 float y = event.getY();
-
-                if (x <= windowLeftBorder + dpToPx(2) && x >= windowLeftBorder - dpToPx(2)) {
-                    isLeftBorderTouched = true;
-                } else if (x <= windowRightBorder + dpToPx(2) && x >= windowRightBorder - dpToPx(2)) {
-                    isRightBorderTouched = true;
-                } else if (x > windowLeftBorder && x < windowRightBorder && y < getHeight() && y > getHeight() - heightFullChartPx) { //Add y
-                    isWindowTouched = true;
+                if (y < getHeight() && y > getHeight() - heightFullChartPx) {
+                    isLeftBorderTouched = x >= windowLeftBorder && x <= windowLeftBorder + strokeWidthVertical;
+                    isRightBorderTouched = x <= windowRightBorder && x >= windowRightBorder - strokeWidthVertical;
+                    isWindowTouched = x >= windowLeftBorder + strokeWidthVertical && x <= windowRightBorder - strokeWidthVertical;
+                    Log.i("LineChart", "LeftBorder: " + isLeftBorderTouched);
+                    Log.i("LineChart", "RightBorder: " + isRightBorderTouched);
+                    Log.i("LineChart", "Window: " + isWindowTouched);
                 }
                 eventX = x;
                 break;
             case MotionEvent.ACTION_MOVE:
-                float dx = event.getX() - eventX;
+                dx = event.getX() - eventX;
                 if (isWindowTouched) {
                     if (windowLeftBorder + dx > 0 && windowRightBorder + dx < getWidth()) {
                         windowLeftBorder += dx;
                         windowRightBorder += dx;
+//                        Log.i("LineChart", "Left Border: " + windowLeftBorder);
+//                        Log.i("LineChart", "Right Border: " + windowRightBorder);
+//                        Log.i("LineChart", "Start Index: " + windowLeftBorder / stepXFullChart);
+//                        Log.i("LineChart", "End Index: " + windowRightBorder / stepXFullChart);
+//                        Log.i("LineChart", "Count: " + (endIndex - startIndex));
                     }
                 } else if (isLeftBorderTouched) {
-                    if (windowRightBorder - windowLeftBorder < countX * stepXFullChart) {
-                        windowLeftBorder = windowRightBorder - countX * stepXFullChart;
+
+                    if (windowRightBorder - (windowLeftBorder + dx) < defaultCountX * stepXFullChart) {
+                        windowLeftBorder = windowRightBorder - defaultCountX * stepXFullChart;
+                        Log.i("LineChart", "InLeft");
                     } else if (windowLeftBorder + dx > 0) {
                         windowLeftBorder += dx;
                     }
                 } else if (isRightBorderTouched) {
-                    if (windowRightBorder - windowLeftBorder + dx < countX * stepXFullChart) {
-                        windowRightBorder = windowLeftBorder + countX * stepXFullChart;
+                    if ((windowRightBorder + dx) - windowLeftBorder < defaultCountX * stepXFullChart) {
+                        windowRightBorder = windowLeftBorder + defaultCountX * stepXFullChart;
                     } else if (windowRightBorder + dx < getWidth()) {
                         windowRightBorder += dx;
                     }
                 }
+                startIndex = (int) (windowLeftBorder / stepXFullChart);
+                endIndex = (int) (windowRightBorder / stepXFullChart);
+                countX = endIndex - startIndex;
                 eventX = event.getX();
                 invalidate();
                 break;
@@ -302,13 +354,58 @@ public class LineChart extends View {
         return true;
     }
 
-    public boolean isWindowTouched(MotionEvent event) {
-        float x = event.getX();
-        float y = event.getY();
-        if (x > windowLeftBorder && x < windowRightBorder && y < getHeight() && y > getHeight() - heightFullChartPx) {
-            isWindowTouched = true;
-        }
-        return isWindowTouched;
+    public boolean isWindowTouched() {
+        return isWindowTouched || isLeftBorderTouched || isRightBorderTouched; //TODO
     }
 
+    public void removeLine(int index) {
+        removedLines.add(index - 1);
+        createValueAnimator(false);
+    }
+
+    public void showLine(int index) {
+        removedLines.remove(new Integer(index - 1)); //TODO remove object
+        createValueAnimator(true);
+    }
+
+
+    private void updateMaxValue() {
+        int max = 0;
+        for (int i = 0; i < maxValues.size(); i++) {
+            if (!removedLines.contains(i) && maxValues.get(i) > max) {
+                max = maxValues.get(i);
+            }
+        }
+        if (max / 10 * 10 + 10 != maxValue) {
+            isMaxValueUpdated = true;
+            maxValue = max / 10 * 10 + 10;
+        }
+    }
+
+    private void createValueAnimator(boolean isShow) {
+        updateMaxValue();
+
+        float newStepYDetailed = heightDetailedChartPx / maxValue;
+        float newStepYFull = heightFullChartPx / maxValue;
+
+        List<PropertyValuesHolder> holder = new ArrayList<>();
+        holder.add(PropertyValuesHolder.ofFloat("detailed", stepYDetailed, newStepYDetailed));
+        holder.add(PropertyValuesHolder.ofFloat("full", stepYFull, newStepYFull));
+        if (isShow)
+            holder.add(PropertyValuesHolder.ofInt("alpha", 0, 255));
+        else
+            holder.add(PropertyValuesHolder.ofInt("alpha", 255, 0));
+
+        animator.setValues(holder.toArray(new PropertyValuesHolder[0]));
+        animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                stepYDetailed = (float) valueAnimator.getAnimatedValue("detailed");
+                stepYFull = (float) valueAnimator.getAnimatedValue("full");
+                alpha = (int) valueAnimator.getAnimatedValue("alpha");
+                invalidate();
+            }
+        });
+        animator.start();
+    }
 }

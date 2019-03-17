@@ -1,25 +1,14 @@
 package com.cherkashyn.chart;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.animation.ArgbEvaluator;
 import android.animation.ValueAnimator;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.widget.TextView;
 
-import com.cherkashyn.telegramchart.utils.JSONParser;
-import com.cherkashyn.telegramchart.chart.LineChart;
 import com.cherkashyn.telegramchart.model.Followers;
+import com.cherkashyn.telegramchart.utils.JSONParser;
 
 import org.json.JSONException;
 
@@ -28,46 +17,32 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.Objects;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 public class MainActivity extends AppCompatActivity {
 
-    ConstraintLayout background;
-    RecyclerView rvCharts;
-    TextView tvJoined;
-    TextView tvLeft;
-    LineChart chart;
+    private RecyclerView recyclerView;
+    private ChartsAdapter chartsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        getSupportActionBar().setTitle("Statistics");
+        Objects.requireNonNull(getSupportActionBar()).setTitle("Statistics");
 
-//        background = findViewById(R.id.background);
-//        tvJoined = findViewById(R.id.textview_joined);
-//        tvLeft = findViewById(R.id.textview_left);
-//        chart = findViewById(R.id.chart);
-        rvCharts = findViewById(R.id.recyclerview_charts);
-        rvCharts.setLayoutManager(new LinearLayoutManager(this));
-        new RecyclerView.SimpleOnItemTouchListener(){
-            @Override
-            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                return super.onInterceptTouchEvent(rv, e);
-            }
-        };
-        ChartsAdapter adapter = new ChartsAdapter();
-        rvCharts.setAdapter(adapter);
+        chartsAdapter = new ChartsAdapter();
+        recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(chartsAdapter);
 
-        try {
-            String json = readJSONFromFile();
-            List<Followers> followersList = JSONParser.parseJSONToListOfFollowers(json);
-            adapter.setData(followersList);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        parseJSON();
     }
 
     private void setTheme() {
@@ -77,14 +52,25 @@ public class MainActivity extends AppCompatActivity {
             setTheme(R.style.ActivityTheme_Light);
     }
 
-    private String readJSONFromFile() throws IOException {
+    private void parseJSON() {
+        try {
+            List<Followers> followersList =
+                    JSONParser.parseJSONToListOfFollowers(getJSONStringFromFile());
+            chartsAdapter.setData(followersList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getJSONStringFromFile() throws IOException {
         InputStream is = getResources().getAssets().open("chart_data.json");
         BufferedReader br = new BufferedReader(new InputStreamReader(is));
         StringBuilder sb = new StringBuilder();
         String s;
         while ((s = br.readLine()) != null) {
-            sb.append(s);
-            sb.append("\n");
+            sb.append(s).append("\n");
         }
         return sb.toString();
     }
@@ -105,69 +91,69 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeTheme() {
-        int colorFromStatusBar, colorToStatusBar, colorFromToolbar, colorToToolbar, colorFromBackground, colorToBackground;
-
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
-            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
-            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
-            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
-            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
-            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
-//            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
-//            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
-        } else {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
-            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
-            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
-            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
-            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
-            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
-//            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
-//            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
-        }
-
-        changeStatusBarColor(colorFromStatusBar, colorToStatusBar);
-        changeToolbarColor(colorFromToolbar, colorToToolbar);
-        changeBackgroundColor(colorFromBackground, colorToBackground);
+//        int colorFromStatusBar, colorToStatusBar, colorFromToolbar, colorToToolbar, colorFromBackground, colorToBackground;
+//
+//        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+//            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+//            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
+//            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
+//            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
+//            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
+//            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
+//            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
+////            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
+////            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
+//        } else {
+//            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+//            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
+//            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
+//            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
+//            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
+//            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
+//            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
+////            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
+////            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
+//        }
+//
+//        changeStatusBarColor(colorFromStatusBar, colorToStatusBar);
+//        changeToolbarColor(colorFromToolbar, colorToToolbar);
+//        changeBackgroundColor(colorFromBackground, colorToBackground);
 
     }
 
-    private void changeStatusBarColor(int colorFrom, int colorTo) {
-        ValueAnimator statusBarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-        statusBarAnimator.setDuration(200);
-        statusBarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                getWindow().setStatusBarColor((Integer) animation.getAnimatedValue());
-            }
-        });
-        statusBarAnimator.start();
-    }
-
-    private void changeToolbarColor(int colorFrom, int colorTo) {
-        ValueAnimator toolbarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-        toolbarAnimator.setDuration(200);
-        toolbarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                getSupportActionBar().setBackgroundDrawable(new ColorDrawable((Integer) animation.getAnimatedValue()));
-            }
-        });
-        toolbarAnimator.start();
-    }
-
-    private void changeBackgroundColor(int colorFrom, int colorTo) {
-        final ValueAnimator backgroundAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-        backgroundAnimator.setDuration(200);
-        backgroundAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                background.setBackgroundColor((Integer) animation.getAnimatedValue());
-            }
-        });
-        backgroundAnimator.start();
-    }
+//    private void changeStatusBarColor(int colorFrom, int colorTo) {
+//        ValueAnimator statusBarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
+//        statusBarAnimator.setDuration(200);
+//        statusBarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                getWindow().setStatusBarColor((Integer) animation.getAnimatedValue());
+//            }
+//        });
+//        statusBarAnimator.start();
+//    }
+//
+//    private void changeToolbarColor(int colorFrom, int colorTo) {
+//        ValueAnimator toolbarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
+//        toolbarAnimator.setDuration(200);
+//        toolbarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                getSupportActionBar().setBackgroundDrawable(new ColorDrawable((Integer) animation.getAnimatedValue()));
+//            }
+//        });
+//        toolbarAnimator.start();
+//    }
+//
+//    private void changeBackgroundColor(int colorFrom, int colorTo) {
+//        final ValueAnimator backgroundAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
+//        backgroundAnimator.setDuration(200);
+//        backgroundAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+//            @Override
+//            public void onAnimationUpdate(ValueAnimator animation) {
+//                background.setBackgroundColor((Integer) animation.getAnimatedValue());
+//            }
+//        });
+//        backgroundAnimator.start();
+//    }
 }

@@ -7,7 +7,6 @@ import android.view.ViewGroup;
 import com.cherkashyn.telegramchart.chart.FollowersChart;
 import com.cherkashyn.telegramchart.model.Followers;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -15,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class ChartsAdapter extends RecyclerView.Adapter<ChartsAdapter.ViewHolder> {
 
-    private List<Followers> followersList = new ArrayList<>();
+    private List<Followers> followersList;
 
     @NonNull
     @Override
@@ -26,17 +25,20 @@ public class ChartsAdapter extends RecyclerView.Adapter<ChartsAdapter.ViewHolder
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        if (followersList.size() > 0) {
+        if (!followersList.isEmpty()) {
             holder.followersChart.setData(followersList.get(position));
         }
     }
 
     @Override
     public int getItemCount() {
-        return followersList.size();
+        if (followersList.isEmpty())
+            return 0;
+        else
+            return followersList.size();
     }
 
-    public void setData(List<Followers> followersList) {
+    void setData(List<Followers> followersList) {
         this.followersList = followersList;
         notifyDataSetChanged();
     }
@@ -45,9 +47,9 @@ public class ChartsAdapter extends RecyclerView.Adapter<ChartsAdapter.ViewHolder
 
         FollowersChart followersChart;
 
-        public ViewHolder(@NonNull View itemView) {
+        ViewHolder(@NonNull View itemView) {
             super(itemView);
-            followersChart = itemView.findViewById(R.id.chart);
+            followersChart = itemView.findViewById(R.id.followers_chart);
         }
     }
 }

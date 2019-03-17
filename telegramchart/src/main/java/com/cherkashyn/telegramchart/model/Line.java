@@ -4,16 +4,16 @@ import java.util.List;
 
 public class Line {
 
-    private List<Integer> y;
+    private List<Integer> listOfY;
     private String name;
     private String color;
 
-    public List<Integer> getY() {
-        return y;
+    public List<Integer> getListOfY() {
+        return listOfY;
     }
 
-    public void setY(List<Integer> y) {
-        this.y = y;
+    public void setListOfY(List<Integer> listOfY) {
+        this.listOfY = listOfY;
     }
 
     public String getName() {

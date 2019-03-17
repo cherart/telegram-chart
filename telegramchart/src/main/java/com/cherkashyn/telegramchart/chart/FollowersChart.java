@@ -5,11 +5,11 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -17,27 +17,24 @@ import android.widget.TextView;
 import com.cherkashyn.telegramchart.R;
 import com.cherkashyn.telegramchart.model.Followers;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.CompoundButtonCompat;
 
-import static com.cherkashyn.telegramchart.utils.DensityConverter.dpToPx;
+import static com.cherkashyn.telegramchart.utils.Utils.dpToPx;
 
-public class FollowersChart extends LinearLayout {
+public class FollowersChart extends LinearLayout implements CompoundButton.OnCheckedChangeListener {
 
     private Followers followers;
     private LineChart lineChart;
     private TextView textViewFollowers;
     private RelativeLayout relativeLayout;
-    private List<CheckBox> checkBoxes = new ArrayList<>();
+
+    private int marginSixteenDp = (int) dpToPx(16);
 
     public FollowersChart(Context context) {
         super(context);
         init();
-        requestDisallowInterceptTouchEvent(false);
     }
 
     public FollowersChart(Context context, @Nullable AttributeSet attrs) {
@@ -45,17 +42,24 @@ public class FollowersChart extends LinearLayout {
         init();
     }
 
-    public FollowersChart(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
     public void init() {
         setOrientation(VERTICAL);
         initTextViewFollowers();
         initLineChart();
-        relativeLayout = new RelativeLayout(getContext());
-        addView(relativeLayout);
+        initRelativeLayout();
+    }
+
+    private void initTextViewFollowers() {
+        textViewFollowers = new TextView(getContext());
+        textViewFollowers.setText("Followers");
+        textViewFollowers.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        textViewFollowers.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+
+        LayoutParams paramsTextViewFollowers = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        paramsTextViewFollowers.setMargins(marginSixteenDp, marginSixteenDp, 0, 0);
+        textViewFollowers.setLayoutParams(paramsTextViewFollowers);
+        textViewFollowers.setTextColor(ContextCompat.getColor(getContext(), R.color.colorDayFollowers));
+        addView(textViewFollowers);
     }
 
     private void initLineChart() {
@@ -67,53 +71,12 @@ public class FollowersChart extends LinearLayout {
         addView(lineChart);
     }
 
-    private void initTextViewFollowers() {
-        textViewFollowers = new TextView(getContext());
-        textViewFollowers.setText("Followers");
-        textViewFollowers.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
-        textViewFollowers.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-
-        int margin = (int) dpToPx(16);
-        LayoutParams paramsTextViewFollowers = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-        paramsTextViewFollowers.setMargins(margin, margin, 0, 0);
-        textViewFollowers.setLayoutParams(paramsTextViewFollowers);
-        textViewFollowers.setTextColor(ContextCompat.getColor(getContext(), R.color.colorDayFollowers));
-        addView(textViewFollowers);
-    }
-
-    private void initCheckBoxes() {
-        int marginBetween = (int) dpToPx(16);
-        int marginLeft = (int) dpToPx(16);
-        int marginTopAndBottom = (int) dpToPx(16);
-
+    private void initRelativeLayout() {
+        relativeLayout = new RelativeLayout(getContext());
         LayoutParams paramsRelativeLayout = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        paramsRelativeLayout.setMargins(marginLeft, marginTopAndBottom, 0, marginTopAndBottom);
+        paramsRelativeLayout.setMargins(marginSixteenDp, marginSixteenDp, 0, marginSixteenDp);
         relativeLayout.setLayoutParams(paramsRelativeLayout);
-        for (int i = 0; i < followers.getLines().size(); i++) {
-
-            CheckBox checkBox = new CheckBox(getContext());
-            checkBox.setId(i + 1);
-            checkBox.setChecked(true);
-            TextView textView = new TextView(getContext());
-            textView.setText("Joined");
-            textView.setText(followers.getLines().get(i).getName());
-            CompoundButtonCompat.setButtonTintList(checkBox, ColorStateList.valueOf(Color.parseColor(followers.getLines().get(i).getColor())));
-            RelativeLayout.LayoutParams layoutParamsCheckBox = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-            RelativeLayout.LayoutParams layoutParamsTextView = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-
-            if (i != 0) {
-                layoutParamsCheckBox.addRule(RelativeLayout.BELOW, i);
-                layoutParamsCheckBox.setMargins(0, marginBetween, 0, 0);
-            }
-            layoutParamsTextView.addRule(RelativeLayout.RIGHT_OF, i + 1);
-            layoutParamsTextView.addRule(RelativeLayout.ALIGN_BASELINE, i + 1);
-            layoutParamsTextView.setMargins(marginLeft, 0, 0, 0);
-
-            textView.setLayoutParams(layoutParamsTextView);
-            checkBox.setLayoutParams(layoutParamsCheckBox);
-            relativeLayout.addView(checkBox);
-            relativeLayout.addView(textView);
-        }
+        addView(relativeLayout);
     }
 
     public void setData(Followers followers) {
@@ -122,10 +85,47 @@ public class FollowersChart extends LinearLayout {
         initCheckBoxes();
     }
 
+    private void initCheckBoxes() {
+        for (int i = 0; i < followers.getLines().size(); i++) {
+
+            CheckBox checkBox = new CheckBox(getContext());
+            checkBox.setId(i + 1);
+            checkBox.setChecked(true);
+            checkBox.setOnCheckedChangeListener(this);
+            CompoundButtonCompat.setButtonTintList(checkBox, ColorStateList.valueOf(Color.parseColor(followers.getLines().get(i).getColor())));
+            RelativeLayout.LayoutParams layoutParamsCheckBox = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            checkBox.setLayoutParams(layoutParamsCheckBox);
+            if (i != 0) {
+                layoutParamsCheckBox.addRule(RelativeLayout.BELOW, i);
+                layoutParamsCheckBox.setMargins(0, marginSixteenDp, 0, 0);
+            }
+
+            TextView textView = new TextView(getContext());
+            textView.setText(followers.getLines().get(i).getName());
+            RelativeLayout.LayoutParams layoutParamsTextView = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            layoutParamsTextView.addRule(RelativeLayout.RIGHT_OF, i + 1);
+            layoutParamsTextView.addRule(RelativeLayout.ALIGN_BASELINE, i + 1);
+            layoutParamsTextView.setMargins(marginSixteenDp, 0, 0, 0);
+            textView.setLayoutParams(layoutParamsTextView);
+
+            relativeLayout.addView(checkBox);
+            relativeLayout.addView(textView);
+        }
+    }
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
-        if (lineChart.isWindowTouched(ev))
+        if (lineChart.isWindowTouched())
             requestDisallowInterceptTouchEvent(true);
         return super.onInterceptTouchEvent(ev);
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if (!isChecked) {
+            lineChart.removeLine(buttonView.getId());
+        } else {
+            lineChart.showLine(buttonView.getId());
+        }
     }
 }
