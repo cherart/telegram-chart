@@ -5,6 +5,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
@@ -17,7 +18,11 @@ import android.widget.TextView;
 import com.cherkashyn.telegramchart.R;
 import com.cherkashyn.telegramchart.model.Followers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.CompoundButtonCompat;
 
@@ -25,10 +30,14 @@ import static com.cherkashyn.telegramchart.utils.Utils.dpToPx;
 
 public class FollowersChart extends LinearLayout implements CompoundButton.OnCheckedChangeListener {
 
+    private List<TextView> textViewList = new ArrayList<>();
+
     private Followers followers;
     private LineChart lineChart;
     private TextView textViewFollowers;
     private RelativeLayout relativeLayout;
+
+    private boolean isDark = false;
 
     private int marginSixteenDp = (int) dpToPx(16);
 
@@ -47,6 +56,7 @@ public class FollowersChart extends LinearLayout implements CompoundButton.OnChe
         initTextViewFollowers();
         initLineChart();
         initRelativeLayout();
+        initColors();
     }
 
     private void initTextViewFollowers() {
@@ -58,7 +68,6 @@ public class FollowersChart extends LinearLayout implements CompoundButton.OnChe
         LayoutParams paramsTextViewFollowers = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         paramsTextViewFollowers.setMargins(marginSixteenDp, marginSixteenDp, 0, 0);
         textViewFollowers.setLayoutParams(paramsTextViewFollowers);
-        textViewFollowers.setTextColor(ContextCompat.getColor(getContext(), R.color.colorDayFollowers));
         addView(textViewFollowers);
     }
 
@@ -79,10 +88,33 @@ public class FollowersChart extends LinearLayout implements CompoundButton.OnChe
         addView(relativeLayout);
     }
 
+    private void initColors() {
+        int color;
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            textViewFollowers.setTextColor(ContextCompat.getColor(getContext(), R.color.colorFollowersNight));
+            setBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorCardBackgroundNight));
+            color = ContextCompat.getColor(getContext(), R.color.colorLineNameNight);
+        } else {
+            textViewFollowers.setTextColor(ContextCompat.getColor(getContext(), R.color.colorFollowersDay));
+            setBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorCardBackgroundDay));
+            color = ContextCompat.getColor(getContext(), R.color.colorLineNameDay);
+        }
+        for (TextView textView : textViewList) {
+            textView.setTextColor(color);
+        }
+        lineChart.setDarkTheme();
+    }
+
     public void setData(Followers followers) {
-        this.followers = followers;
-        lineChart.setData(followers);
-        initCheckBoxes();
+        if (this.followers == null || !this.followers.equals(followers)) {
+            this.followers = followers;
+            initCheckBoxes();
+            lineChart.setData(followers);
+        }
+    }
+
+    public void setDarkTheme() {
+        initColors();
     }
 
     private void initCheckBoxes() {
@@ -107,6 +139,7 @@ public class FollowersChart extends LinearLayout implements CompoundButton.OnChe
             layoutParamsTextView.addRule(RelativeLayout.ALIGN_BASELINE, i + 1);
             layoutParamsTextView.setMargins(marginSixteenDp, 0, 0, 0);
             textView.setLayoutParams(layoutParamsTextView);
+            textViewList.add(textView);
 
             relativeLayout.addView(checkBox);
             relativeLayout.addView(textView);

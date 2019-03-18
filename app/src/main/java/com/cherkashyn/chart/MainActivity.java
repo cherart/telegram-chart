@@ -1,7 +1,5 @@
 package com.cherkashyn.chart;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.Menu;
@@ -32,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Objects.requireNonNull(getSupportActionBar()).setTitle("Statistics");
@@ -43,13 +40,6 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(chartsAdapter);
 
         parseJSON();
-    }
-
-    private void setTheme() {
-        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES)
-            setTheme(R.style.ActivityTheme_Dark);
-        else
-            setTheme(R.style.ActivityTheme_Light);
     }
 
     private void parseJSON() {
@@ -91,69 +81,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void changeTheme() {
-//        int colorFromStatusBar, colorToStatusBar, colorFromToolbar, colorToToolbar, colorFromBackground, colorToBackground;
-//
-//        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
-//            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-//            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
-//            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
-//            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
-//            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
-//            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
-//            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
-////            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
-////            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextDay));
-//        } else {
-//            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-//            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
-//            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
-//            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
-//            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
-//            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
-//            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
-////            tvJoined.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
-////            tvLeft.setTextColor(ContextCompat.getColor(this, R.color.colorTextNight));
-//        }
-//
-//        changeStatusBarColor(colorFromStatusBar, colorToStatusBar);
-//        changeToolbarColor(colorFromToolbar, colorToToolbar);
-//        changeBackgroundColor(colorFromBackground, colorToBackground);
+        int colorFromStatusBar, colorToStatusBar, colorFromToolbar, colorToToolbar, colorFromBackground, colorToBackground;
 
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
+            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
+            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
+            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
+            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
+            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
+            chartsAdapter.changeTheme();
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+            colorFromStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryDayDark);
+            colorToStatusBar = ContextCompat.getColor(this, R.color.colorPrimaryNightDark);
+            colorFromToolbar = ContextCompat.getColor(this, R.color.colorPrimaryDay);
+            colorToToolbar = ContextCompat.getColor(this, R.color.colorPrimaryNight);
+            colorFromBackground = ContextCompat.getColor(this, R.color.colorBackgroundDay);
+            colorToBackground = ContextCompat.getColor(this, R.color.colorBackgroundNight);
+
+            chartsAdapter.changeTheme();
+        }
+
+        getWindow().setStatusBarColor(colorToStatusBar);
+        getSupportActionBar().setBackgroundDrawable(new ColorDrawable(colorToToolbar));
+        recyclerView.setBackgroundColor(colorToBackground);
     }
-
-//    private void changeStatusBarColor(int colorFrom, int colorTo) {
-//        ValueAnimator statusBarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-//        statusBarAnimator.setDuration(200);
-//        statusBarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//            @Override
-//            public void onAnimationUpdate(ValueAnimator animation) {
-//                getWindow().setStatusBarColor((Integer) animation.getAnimatedValue());
-//            }
-//        });
-//        statusBarAnimator.start();
-//    }
-//
-//    private void changeToolbarColor(int colorFrom, int colorTo) {
-//        ValueAnimator toolbarAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-//        toolbarAnimator.setDuration(200);
-//        toolbarAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//            @Override
-//            public void onAnimationUpdate(ValueAnimator animation) {
-//                getSupportActionBar().setBackgroundDrawable(new ColorDrawable((Integer) animation.getAnimatedValue()));
-//            }
-//        });
-//        toolbarAnimator.start();
-//    }
-//
-//    private void changeBackgroundColor(int colorFrom, int colorTo) {
-//        final ValueAnimator backgroundAnimator = ValueAnimator.ofObject(new ArgbEvaluator(), colorFrom, colorTo);
-//        backgroundAnimator.setDuration(200);
-//        backgroundAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//            @Override
-//            public void onAnimationUpdate(ValueAnimator animation) {
-//                background.setBackgroundColor((Integer) animation.getAnimatedValue());
-//            }
-//        });
-//        backgroundAnimator.start();
-//    }
 }

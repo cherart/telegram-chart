@@ -27,6 +27,7 @@ public class ChartsAdapter extends RecyclerView.Adapter<ChartsAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (!followersList.isEmpty()) {
             holder.followersChart.setData(followersList.get(position));
+            holder.followersChart.setDarkTheme();
         }
     }
 
@@ -40,6 +41,10 @@ public class ChartsAdapter extends RecyclerView.Adapter<ChartsAdapter.ViewHolder
 
     void setData(List<Followers> followersList) {
         this.followersList = followersList;
+        notifyDataSetChanged();
+    }
+
+    void changeTheme() {
         notifyDataSetChanged();
     }
 

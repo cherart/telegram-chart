@@ -2,23 +2,25 @@
 <resources>
     <color name="colorPrimaryDay">#537EA0</color>
     <color name="colorPrimaryDayDark">#436481</color>
-    <color name="colorBackgroundDay">#FFFFFF</color>
-    <color name="colorDayAccent">#D81B60</color>
-    <color name="colorDayFollowers">#3D97D2</color>
-    <color name="colorDayGreen">#43C047</color>
-    <color name="colorDayRed">#EB6962</color>
-    <color name="colorDayGrey">#E0E0E0</color>
-    <color name="colorTextDay">#000000</color>
+    <color name="colorBackgroundDay">#F0F0F0</color>
+    <color name="colorCardBackgroundDay">#FFFFFF</color>
+    <color name="colorFollowersDay">#3D97D2</color>
+    <color name="colorValuesDay">#96A2AA</color>
+    <color name="colorLineNameDay">#000000</color>
+    <color name="colorGridDay">#E7E7E7</color>
+    <color name="colorRectangleDay">#80EBF1F2</color>
+    <color name="colorWindowDay">#80D2DCE6</color>
 
     <color name="colorPrimaryNight">#212D3A</color>
     <color name="colorPrimaryNightDark">#1A242E</color>
-    <color name="colorBackgroundNight">#1D2733</color>
-    <color name="colorNightAccent">#D81B60</color>
-    <color name="colorNightFollowers">#3D97D2</color>
-    <color name="colorNightGreen">#43C047</color>
-    <color name="colorNightRed">#EB6962</color>
-    <color name="colorNightGrey">#E0E0E0</color>
-    <color name="colorTextNight">#FFFFFF</color>
+    <color name="colorBackgroundNight">#151E27</color>
+    <color name="colorCardBackgroundNight">#1D2733</color>
+    <color name="colorFollowersNight">#7EC5F9</color>
+    <color name="colorValuesNight">#516371</color>
+    <color name="colorLineNameNight">#FFFFFF</color>
+    <color name="colorGridNight">#101924</color>
+    <color name="colorRectangleNight">#8019232E</color>
+    <color name="colorWindowNight">#4DFFFFFF</color>
 
-    <color name="colorOpac">#E4EEF5</color>
+    <color name="colorAccent">#537EA0</color>
 </resources>

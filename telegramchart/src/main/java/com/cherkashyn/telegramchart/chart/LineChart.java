@@ -14,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 
+import com.cherkashyn.telegramchart.R;
 import com.cherkashyn.telegramchart.model.Followers;
 import com.cherkashyn.telegramchart.model.Line;
 
@@ -22,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.content.ContextCompat;
 
 import static com.cherkashyn.telegramchart.utils.Utils.dpToPx;
 
@@ -104,23 +107,19 @@ public class LineChart extends View {
         paintLine.setStyle(Paint.Style.STROKE);
 
         paintGridLine = new Paint();
-        paintGridLine.setColor(Color.parseColor("#E0E0E0"));
         paintGridLine.setStrokeWidth(2);
         paintGridLine.setStyle(Paint.Style.STROKE);
 
         paintText = new TextPaint();
-        paintText.setColor(Color.parseColor("#96A2AA"));
         paintText.setStyle(Paint.Style.FILL);
         paintText.setTextSize(dpToPx(textSize));
 
         paintWindowSelector = new Paint();
-        paintWindowSelector.setColor(Color.parseColor("#DBE7F0"));
         paintWindowSelector.setStrokeWidth(dpToPx(2));
         paintWindowSelector.setAlpha(210);
         paintWindowSelector.setStyle(Paint.Style.STROKE);
 
         paintRectangle = new Paint();
-        paintRectangle.setColor(Color.parseColor("#E4EEF5"));
         paintRectangle.setAlpha(125);
 
         pathGridLine = new Path();
@@ -248,10 +247,10 @@ public class LineChart extends View {
     }
 
     private void drawWindowSelector(Canvas canvas) {
-        pathWindowHorizontal.moveTo(windowLeftBorder, windowTopBorder + strokeWidthHorizontal / 2);
-        pathWindowHorizontal.lineTo(windowRightBorder, windowTopBorder + strokeWidthHorizontal / 2);
-        pathWindowHorizontal.moveTo(windowLeftBorder, windowBottomBorder - strokeWidthHorizontal / 2);
-        pathWindowHorizontal.lineTo(windowRightBorder, windowBottomBorder - strokeWidthHorizontal / 2);
+        pathWindowHorizontal.moveTo(windowLeftBorder + strokeWidthVertical, windowTopBorder + strokeWidthHorizontal / 2);
+        pathWindowHorizontal.lineTo(windowRightBorder - strokeWidthVertical, windowTopBorder + strokeWidthHorizontal / 2);
+        pathWindowHorizontal.moveTo(windowLeftBorder + strokeWidthVertical, windowBottomBorder - strokeWidthHorizontal / 2);
+        pathWindowHorizontal.lineTo(windowRightBorder - strokeWidthVertical, windowBottomBorder - strokeWidthHorizontal / 2);
 
         pathWindowVertical.moveTo(windowLeftBorder + strokeWidthVertical / 2, windowTopBorder);
         pathWindowVertical.lineTo(windowLeftBorder + strokeWidthVertical / 2, windowBottomBorder);
@@ -265,6 +264,21 @@ public class LineChart extends View {
         paintWindowSelector.setStrokeWidth(strokeWidthVertical);
         canvas.drawPath(pathWindowVertical, paintWindowSelector);
         pathWindowVertical.reset();
+    }
+
+    public void setDarkTheme() {
+        if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_YES) {
+            paintGridLine.setColor(ContextCompat.getColor(getContext(), R.color.colorGridNight));
+            paintText.setColor(ContextCompat.getColor(getContext(), R.color.colorValuesNight));
+            paintRectangle.setColor(ContextCompat.getColor(getContext(), R.color.colorRectangleNight));
+            paintWindowSelector.setColor(ContextCompat.getColor(getContext(), R.color.colorWindowNight));
+        } else {
+            paintGridLine.setColor(ContextCompat.getColor(getContext(), R.color.colorGridDay));
+            paintText.setColor(ContextCompat.getColor(getContext(), R.color.colorValuesDay));
+            paintRectangle.setColor(ContextCompat.getColor(getContext(), R.color.colorRectangleDay));
+            paintWindowSelector.setColor(ContextCompat.getColor(getContext(), R.color.colorWindowDay));
+        }
+        invalidate();
     }
 
     public void setData(Followers followers) {
@@ -306,9 +320,6 @@ public class LineChart extends View {
                     isLeftBorderTouched = x >= windowLeftBorder && x <= windowLeftBorder + strokeWidthVertical;
                     isRightBorderTouched = x <= windowRightBorder && x >= windowRightBorder - strokeWidthVertical;
                     isWindowTouched = x >= windowLeftBorder + strokeWidthVertical && x <= windowRightBorder - strokeWidthVertical;
-                    Log.i("LineChart", "LeftBorder: " + isLeftBorderTouched);
-                    Log.i("LineChart", "RightBorder: " + isRightBorderTouched);
-                    Log.i("LineChart", "Window: " + isWindowTouched);
                 }
                 eventX = x;
                 break;
@@ -318,17 +329,11 @@ public class LineChart extends View {
                     if (windowLeftBorder + dx > 0 && windowRightBorder + dx < getWidth()) {
                         windowLeftBorder += dx;
                         windowRightBorder += dx;
-//                        Log.i("LineChart", "Left Border: " + windowLeftBorder);
-//                        Log.i("LineChart", "Right Border: " + windowRightBorder);
-//                        Log.i("LineChart", "Start Index: " + windowLeftBorder / stepXFullChart);
-//                        Log.i("LineChart", "End Index: " + windowRightBorder / stepXFullChart);
-//                        Log.i("LineChart", "Count: " + (endIndex - startIndex));
                     }
                 } else if (isLeftBorderTouched) {
 
                     if (windowRightBorder - (windowLeftBorder + dx) < defaultCountX * stepXFullChart) {
                         windowLeftBorder = windowRightBorder - defaultCountX * stepXFullChart;
-                        Log.i("LineChart", "InLeft");
                     } else if (windowLeftBorder + dx > 0) {
                         windowLeftBorder += dx;
                     }
@@ -355,7 +360,7 @@ public class LineChart extends View {
     }
 
     public boolean isWindowTouched() {
-        return isWindowTouched || isLeftBorderTouched || isRightBorderTouched; //TODO
+        return isWindowTouched || isLeftBorderTouched || isRightBorderTouched;
     }
 
     public void removeLine(int index) {
@@ -364,7 +369,7 @@ public class LineChart extends View {
     }
 
     public void showLine(int index) {
-        removedLines.remove(new Integer(index - 1)); //TODO remove object
+        removedLines.remove(new Integer(index - 1));
         createValueAnimator(true);
     }
 
